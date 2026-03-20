@@ -35,7 +35,7 @@ function getTaipeiDate(): string {
 export async function analyzeStock(stockCode: string): Promise<StockAnalysis> {
   const genAI = getGeminiClient();
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-3-flash-preview',
     generationConfig: {
       temperature: 0.7,
       topP: 0.95,
