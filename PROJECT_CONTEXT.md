@@ -4,20 +4,18 @@
 
 ## 🔖 快速啟動區
 
-**上次停在**：專案初始化完成，git init + 初次 commit，等待 GitHub Personal Access Token 以完成 push
+**上次停在**：本機測試全部通過（Gemini 分析、個人推播、群組推播），預測區間已移至報告最上方
 
-**最新測試結果**：尚未執行（Build 狀態待確認）
+**最新測試結果**：本機 PASS — /api/cron success:2（個人+群組）
 
 **下一步表格**：
 
 | 優先 | 任務 | 狀態 |
 |------|------|------|
-| 🔴 | git push 到 GitHub (hdmer-APP/stock-morning-bot) | 等待 PAT |
 | 🔴 | 部署至 Vercel | 待辦 |
-| 🟡 | 設定 Vercel 環境變數 | 待辦 |
+| 🔴 | 設定 Vercel 環境變數（5個） | 待辦 |
 | 🟡 | 設定 Telegram Webhook URL | 待辦 |
-| 🟢 | 測試 /webhook 端點 | 待辦 |
-| 🟢 | 測試 /cron 端點 | 待辦 |
+| 🟢 | 驗證 Vercel Cron 正常觸發 | 待辦 |
 
 **已知問題**：無
 
@@ -130,3 +128,4 @@ stock-morning-bot/
 | 日期 | 說明 |
 |------|------|
 | 2026-03-20 | 專案初始化，git init，建立 PROJECT_CONTEXT.md 與 .claudeignore |
+| 2026-03-20 | 升級至 gemini-3-flash-preview，本機測試通過，個人+群組推播正常，預測區間移至報告最上方 |
