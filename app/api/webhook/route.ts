@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { analyzeStock, analyzeMultipleStocks } from '@/lib/gemini';
 import { sendMessage } from '@/lib/telegram';
 import { WELCOME_MESSAGE, HELP_MESSAGE, UNKNOWN_INPUT_MESSAGE } from '@/lib/prompt';
+import { verifyWebhookSecret, isValidStockCode, securityHeaders } from '@/lib/security';
 import type { TelegramUpdate } from '@/types';
 
 export const runtime = 'edge';
@@ -21,12 +22,13 @@ function parseStockCodes(text: string): string[] {
   // 移除 slash 指令前綴
   const cleanText = text.replace(/^\/\w+\s*/, '').trim();
 
-  // 匹配 4-5 位數字的股票代碼
-  const codes = cleanText.match(/\b(\d{4,5})\b/g);
+  // 匹配 4-5 位數字的股票代碼，過濾無效格式
+  const rawCodes = cleanText.match(/\b(\d{4,5})\b/g) ?? [];
+  const codes = rawCodes.filter(isValidStockCode);
 
-  if (codes && codes.length > 0) {
-    // 去重複，最多 5 支
-    return [...new Set(codes)].slice(0, 5);
+  if (codes.length > 0) {
+    // 去重複，最多 3 支（防止濫用）
+    return [...new Set(codes)].slice(0, 3);
   }
 
   return [];
@@ -36,6 +38,11 @@ function parseStockCodes(text: string): string[] {
  * 處理 Telegram Webhook POST 請求
  */
 export async function POST(request: NextRequest) {
+  // 驗證來源為 Telegram
+  if (!verifyWebhookSecret(request)) {
+    return new NextResponse(null, { status: 403, headers: securityHeaders() });
+  }
+
   try {
     const update: TelegramUpdate = await request.json();
     const message = update.message;
@@ -86,7 +93,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Webhook 處理錯誤:', error);
-    return NextResponse.json({ ok: true }); // 回 200 避免 Telegram 重試
+    return NextResponse.json({ ok: true }, { headers: securityHeaders() });
   }
 }
 
@@ -94,8 +101,8 @@ export async function POST(request: NextRequest) {
  * GET — 用於 Webhook 驗證
  */
 export async function GET() {
-  return NextResponse.json({
-    status: 'ok',
-    message: '股票晨間分析 Bot Webhook is running',
-  });
+  return NextResponse.json(
+    { status: 'ok', message: 'Webhook is running' },
+    { headers: securityHeaders() }
+  );
 }

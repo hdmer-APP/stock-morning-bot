@@ -36,7 +36,7 @@ export async function sendMessage(chatId: string, text: string): Promise<boolean
         body: JSON.stringify({
           chat_id: chatId,
           text: chunk,
-          parse_mode: 'Markdown',
+          parse_mode: 'HTML',
           disable_web_page_preview: true,
         }),
       });
