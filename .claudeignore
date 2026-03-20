@@ -1,0 +1,34 @@
+# 建置輸出
+.next/
+out/
+build/
+dist/
+
+# 依賴套件
+node_modules/
+
+# 版本控制
+.git/
+
+# Lock 檔案
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 快取 / 產生檔
+*.tsbuildinfo
+*.log
+.cache/
+next-env.d.ts
+
+# 環境變數
+.env
+.env.*
+
+# 靜態資源
+*.ico
+*.svg
+public/
+
+# Vercel
+.vercel
