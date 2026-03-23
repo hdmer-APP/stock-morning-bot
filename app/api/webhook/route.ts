@@ -2,14 +2,15 @@
 // Telegram Webhook — 雙向互動 API
 // ============================================
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { analyzeStock, analyzeMultipleStocks } from '@/lib/gemini';
 import { sendMessage } from '@/lib/telegram';
 import { WELCOME_MESSAGE, HELP_MESSAGE, UNKNOWN_INPUT_MESSAGE } from '@/lib/prompt';
 import { verifyWebhookSecret, isValidStockCode, securityHeaders } from '@/lib/security';
 import type { TelegramUpdate } from '@/types';
 
-export const runtime = 'edge';
+// 追蹤正在處理中的 chatId，防止使用者重複送出相同股票查詢
+const pendingRequests = new Set<string>();
 
 /**
  * 從使用者輸入中解析股票代碼
@@ -73,22 +74,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // 防止重複請求：若同一 chatId 正在分析中，直接回覆提示
+    if (pendingRequests.has(chatId)) {
+      await sendMessage(chatId, '⏳ 上一個查詢仍在處理中，請稍候再送出。');
+      return NextResponse.json({ ok: true });
+    }
+
     // 發送「分析中」提示
     const loadingText = stockCodes.length === 1
-      ? `🔍 正在分析 **${stockCodes[0]}**，請稍候...`
-      : `🔍 正在分析 ${stockCodes.map(c => `**${c}**`).join('、')}，請稍候...`;
+      ? `🔍 正在分析 <b>${stockCodes[0]}</b>，請稍候...`
+      : `🔍 正在分析 ${stockCodes.map(c => `<b>${c}</b>`).join('、')}，請稍候...`;
     await sendMessage(chatId, loadingText);
 
-    // 執行分析並回覆
-    if (stockCodes.length === 1) {
-      const analysis = await analyzeStock(stockCodes[0]);
-      await sendMessage(chatId, analysis.report);
-    } else {
-      const analyses = await analyzeMultipleStocks(stockCodes);
-      for (const analysis of analyses) {
-        await sendMessage(chatId, analysis.report);
+    // 標記此 chatId 正在處理
+    pendingRequests.add(chatId);
+
+    // 使用 after() 在背景執行分析，讓 webhook 立即回傳 200
+    // 避免 Telegram 因超過 5 秒 timeout 而重試（重試會導致重複發送「正在分析中」）
+    after(async () => {
+      try {
+        if (stockCodes.length === 1) {
+          const analysis = await analyzeStock(stockCodes[0]);
+          await sendMessage(chatId, analysis.report);
+        } else {
+          const analyses = await analyzeMultipleStocks(stockCodes);
+          for (const analysis of analyses) {
+            await sendMessage(chatId, analysis.report);
+          }
+        }
+      } catch (error) {
+        console.error('背景分析失敗:', error);
+        await sendMessage(chatId, '❌ 分析時發生錯誤，請稍後再試。');
+      } finally {
+        pendingRequests.delete(chatId);
       }
-    }
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

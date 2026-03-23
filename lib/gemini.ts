@@ -28,6 +28,23 @@ function getTaipeiDate(): string {
 }
 
 /**
+ * 取得台北時間的上一個交易日日期字串（跳過週末）
+ */
+function getYesterdayTradingDate(): string {
+  const now = new Date();
+  const taipeiTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
+  taipeiTime.setDate(taipeiTime.getDate() - 1);
+  // 週日 → 往回到週五
+  if (taipeiTime.getDay() === 0) taipeiTime.setDate(taipeiTime.getDate() - 2);
+  // 週六 → 往回到週五
+  else if (taipeiTime.getDay() === 6) taipeiTime.setDate(taipeiTime.getDate() - 1);
+  const year = taipeiTime.getFullYear();
+  const month = String(taipeiTime.getMonth() + 1).padStart(2, '0');
+  const day = String(taipeiTime.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * 使用 Gemini 分析單支股票
  * @param stockCode - 台股代碼，例如 "2330"
  * @returns StockAnalysis 分析結果
@@ -37,7 +54,7 @@ export async function analyzeStock(stockCode: string): Promise<StockAnalysis> {
   const model = genAI.getGenerativeModel({
     model: 'gemini-3-flash-preview',
     generationConfig: {
-      temperature: 0.7,
+      temperature: 0.1,
       topP: 0.95,
       topK: 40,
       maxOutputTokens: 4096,
@@ -45,7 +62,8 @@ export async function analyzeStock(stockCode: string): Promise<StockAnalysis> {
   });
 
   const currentDate = getTaipeiDate();
-  const prompt = generateAnalysisPrompt(stockCode, currentDate);
+  const yesterdayDate = getYesterdayTradingDate();
+  const prompt = generateAnalysisPrompt(stockCode, currentDate, yesterdayDate);
 
   try {
     const result = await model.generateContent({

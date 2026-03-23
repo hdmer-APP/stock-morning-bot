@@ -7,13 +7,18 @@
  * @param stockCode - 台股代碼，例如 "2330"
  * @param currentDate - 當前日期字串，例如 "2026-03-18"
  */
-export function generateAnalysisPrompt(stockCode: string, currentDate: string): string {
+export function generateAnalysisPrompt(stockCode: string, currentDate: string, yesterdayDate: string): string {
   return `你是一位專業的台股分析師，請針對台股代碼 ${stockCode}，進行今日（${currentDate}）的晨間分析報告。
+
+【重要數據要求】
+- 昨日收盤價：請搜尋並引用 ${yesterdayDate} 的收盤價，這是最新的交易日。不得使用其他日期的收盤價。
+- 若搜尋結果中有多個不同來源的收盤價，請選擇 TWSE（台灣證券交易所）或台股官方來源的數據。
 
 請搜尋最新的網路資訊，並以 <b>Telegram HTML 格式</b> 輸出完整報告（使用 &lt;b&gt; &lt;i&gt; &lt;code&gt; 標籤，禁用 Markdown 符號如 * # **）：
 
 📊 <b>【${stockCode} 晨間分析報告】</b>
 📅 日期：${currentDate}
+📌 <b>昨日收盤價（${yesterdayDate}）：</b><code>??? 元</code>
 
 🎯 <b>今日股價預測區間</b>
 🟢 樂觀：<code>??? ~ ??? 元</code>　信心指數 ??%
@@ -47,11 +52,12 @@ export function generateAnalysisPrompt(stockCode: string, currentDate: string): 
 <i>⚠️ 免責聲明：本報告由 AI 根據公開網路資訊自動生成，僅供參考，不構成投資建議。所有投資決策應由您本人依據個人財務狀況自行判斷，並建議諮詢合格之專業財務顧問。</i>
 
 請確保：
-1. 所有數據引用最新的公開資訊
-2. 信心指數根據多項技術指標綜合評估，以百分比表示
-3. 預測區間基於近期價格波動與技術指標推算，填入真實數值
-4. 全程使用繁體中文
-5. 只使用 Telegram HTML 標籤，不使用任何 Markdown 符號`;
+1. 昨日收盤價必須使用 ${yesterdayDate} 的數據，不得混用其他日期
+2. 所有數據引用最新的公開資訊
+3. 信心指數根據多項技術指標綜合評估，以百分比表示
+4. 預測區間基於近期價格波動與技術指標推算，填入真實數值
+5. 全程使用繁體中文
+6. 只使用 Telegram HTML 標籤，不使用任何 Markdown 符號`;
 }
 
 /**
