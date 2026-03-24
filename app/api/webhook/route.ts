@@ -74,9 +74,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    // 防止重複請求：若同一 chatId 正在分析中，直接回覆提示
+    // 防止重複請求：若同一 chatId 正在分析中，靜默忽略
+    // 不發任何訊息，避免與背景分析結果同時送出造成衝突
     if (pendingRequests.has(chatId)) {
-      await sendMessage(chatId, '⏳ 上一個查詢仍在處理中，請稍候再送出。');
       return NextResponse.json({ ok: true });
     }
 
