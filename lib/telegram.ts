@@ -25,12 +25,8 @@ function getBotToken(): string {
 export async function sendMessage(chatId: string, text: string): Promise<boolean> {
   const token = getBotToken();
 
-  // 修復 Gemini 可能輸出的非法 HTML 字元（未轉義的 & < >）
-  // 只轉義標籤外的裸字元，避免破壞合法的 <b> <code> 標籤
-  const safeText = text.replace(/&(?!(amp|lt|gt|quot|#\d+);)/g, '&amp;');
-
   // Telegram 限制每則訊息最長 4096 字元，超過需要分段
-  const chunks = splitMessage(safeText, 4000);
+  const chunks = splitMessage(text, 4000);
 
   for (const chunk of chunks) {
     try {
